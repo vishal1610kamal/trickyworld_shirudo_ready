@@ -1,0 +1,14 @@
+# Where the test kernel came from
+
+shirudo release test-kernel-45212180772 (prerelease, 23 Nov 2026), asset kernel-packages-x86-64-ci.zip
+SHA-256 f3e660ce7b1e0cea8d3d1c19d8f3a75097c8aa9cf1dbc10b7ad81abfa2134a9b, the value in the release's SHA256SUMS and the one
+pinned in shirudo's testing/vm/kernel-artifact.sh. Files read from the zip (data only, nothing executed):
+
+ref=bpf-next
+commit=2bf3351c5f894697e8443eeef5333d4c4ce90cab
+patched_commit=5c7fd99b1089d550ea8e2faf90d2990313713ac2
+patches=0001-cgroup-security-add-task_cgroup_attach-LSM-hook.patch 0002-kbuild-drop-a-.0-sublevel-and-the-rc-suffix-from-the.patch 0018-riscv-build-without-LLVM-s-GlobalMerge-pass.patch 0020-tpm-Let-LSMs-inspect-userspace-commands.patch 0021-bpf-Read-security.bpf-xattrs-for-LSM-programs-without-the-callers-permission.patch 0022-bpf-Let-sleepable-LSM-programs-attach-to-the-remaining-inode-hooks.patch 0023-bpf-Treat-dentry-d_parent-as-a-trusted-pointer.patch 0024-mm-Let-LSMs-check-read-only-remote-mm-access-under-CAP_PERFMON.patch
+arch=x86-64
+kernelrelease=7.4-shirudo-ci-20261123
+compiler="Ubuntu clang version 20.1.8 (2ubuntu8)"
+built_at=2026-11-23T16:36:19Z

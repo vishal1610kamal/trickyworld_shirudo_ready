@@ -1,0 +1,18 @@
+shirudo-ready 1.0.0 (checks follow shirudo 8a3b249b4be8)
+Kernel (BTF file vmlinux-7.4-shirudo-ci-20261123.btf)
+
+Does this kernel pass shirudo's kernel checks?
+  OK    kernel_btf                93284 types, little-endian
+  OK    signed_loader_kernel_abi
+  OK    kernel_lsm_hooks          all 49 hooks present
+  OK    module_signatures         modules are signature-checked (CONFIG_MODULE_SIG)
+
+Verdict: ready: every target check passes.
+
+shirudo-ready 1.0.0 (checks follow shirudo 8a3b249b4be8)
+Kernel (configuration file config-7.4-shirudo-ci-20261123)
+
+Does this configuration have every option a target needs?
+  OK    kernel_config             all 31 required options set; CONFIG_LSM="bpf"
+
+Verdict: ready: every target check passes.

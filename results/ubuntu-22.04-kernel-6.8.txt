@@ -1,0 +1,71 @@
+shirudo-ready 1.0.0 (checks follow shirudo 8a3b249b4be8)
+Kernel 6.8.0-149-generic
+
+Can this host be a Shirudo target?
+  OK    kernel_btf                140583 types
+  FAIL  signed_loader_kernel_abi  struct bpf_map.sha is missing; boot a shirudo-patched kernel
+  FAIL  kernel_lsm_hooks          kernel has no LSM hooks bdev_free_security, bdev_setintegrity, bpf_prog_load, inode_file_setattr, inode_post_removexattr, mm_read_access, tpm_command (7 of 49); boot a shirudo-patched kernel
+                                  -> mm_read_access, tpm_command come only from patches shirudo carries; no stock kernel has them
+  OK    module_signatures         modules are signature-checked (CONFIG_MODULE_SIG)
+  FAIL  bpf_lsm_active            active LSMs: lockdown,capability,landlock,yama,apparmor (no bpf)
+                                  -> needs CONFIG_BPF_LSM=y and bpf in CONFIG_LSM, or lsm=lockdown,capability,landlock,yama,apparmor,bpf on the kernel command line
+  OK    bpffs_supported           /proc/filesystems lists bpf
+  FAIL  kernel_config             1 required option(s) missing; CONFIG_LSM="landlock,lockdown,yama,integrity,apparmor", so bpf must be added with lsm= (/boot/config-6.8.0-149-generic)
+                                  - CONFIG_CRYPTO_MLDSA (ML-DSA-87, the only signature shirudo makes)
+  OK    tpm2_device               /dev/tpmrm0 present, TPM 2.0, SHA-256 PCR bank
+  FAIL  systemd_version           systemd 249
+                                  -> needs systemd 256 or newer (shirudo-initrd.service orders after tpm2.target)
+  FAIL  uki_boot                  UEFI boot, but no systemd-stub variables (not a unified kernel image)
+                                  -> a target boots a signed UKI through systemd-stub, which measures the initrd into PCR 11
+  FAIL  dracut_initrd             dracut is not installed
+                                  -> a target boots a systemd initrd built by dracut with shirudo's 90shirudo module
+  INFO  keyring_cmdline           not set: bpf.keyring_unsealed=1, dm_verity.keyring_unsealed=1
+                                  -> a target boots with both, from its signed UKI, so that init can enroll and seal the keyrings
+
+What would stop working, or weaken, if it enforced?
+  WARN  systemd_bpf_settings      28 unit(s) use settings that systemd enforces with BPF; on an enforcing target they start without them, with no error
+                                  -> use nftables or a signed cgroup_skb/netfilter upatch for address rules
+                                  - accounts-daemon.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - fwupd.service: DeviceAllow=block-sd rw char-aux rw char-cpu/* rw char-drm rw char-gpiochip rw char-hidraw rw char-mei rw char-mtd rw char-tpm rw char-usb rw char-usb_device rw char-mem rw char-nvme rw block-blkext rw
+                                  - logrotate.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)
+                                  - man-db.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)
+                                  - nm-priv-helper.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)
+                                  - openvpn-client@.service: DeviceAllow=/dev/null rw /dev/net/tun rw
+                                  - openvpn-server@.service: DeviceAllow=/dev/null rw /dev/net/tun rw
+                                  - openvpn@.service: DeviceAllow=/dev/null rw /dev/net/tun rw
+                                  - php8.2-fpm.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - php8.3-fpm.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - plocate-updatedb.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - redis-server.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - redis-server@.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - rsync.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - systemd-hostnamed.service: DevicePolicy=closed (from PrivateDevices=yes), IPAddressDeny=any
+                                  - systemd-journald.service: DeviceAllow=char-* rw, IPAddressDeny=any
+                                  - systemd-journald@.service: DevicePolicy=closed, IPAddressDeny=any
+                                  - systemd-localed.service: DevicePolicy=closed (from PrivateDevices=yes), IPAddressDeny=any
+                                  - systemd-logind.service: DeviceAllow=block-* r char-/dev/console rw char-drm rw char-input rw char-tty rw char-vcs rw, IPAddressDeny=any
+                                  - systemd-networkd.service: DeviceAllow=char-* rw
+                                  - systemd-oomd.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes), IPAddressDeny=any
+                                  - systemd-resolved.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)
+                                  - systemd-timedated.service: DeviceAllow=char-rtc r, IPAddressDeny=any
+                                  - systemd-timesyncd.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - systemd-udevd.service: DeviceAllow=block-* rwm char-* rwm, IPAddressDeny=any
+                                  - ubuntu-advantage-desktop-daemon.service: DevicePolicy=closed (from PrivateDevices=yes)
+                                  - upower.service: IPAddressDeny=any
+                                  - uuidd.service: DevicePolicy=closed (from PrivateDevices=yes)
+  OK    bpf_programs_running      no known BPF agent is running
+  INFO  bpf_tools_installed       installed BPF tools stop at their first map or program load (bpftool's prog show keeps working)
+                                  -> run one-off investigations on a host that does not enforce
+                                  - /usr/sbin/bpftool
+  WARN  container_runtimes        on cgroup v2, container device rules are BPF programs, and their loads are refused
+                                  -> shirudo's docs: test your runtime on an enforcing target
+                                  - /usr/bin/dockerd
+                                  - /usr/bin/containerd
+                                  - /usr/bin/runc
+  OK    kdump_kexec               no crash kernel configured
+  OK    hibernation               hibernation not offered (freeze mem)
+  OK    systemd_keyring_setup     systemd-keyring-setup not installed
+  INFO  other_lsms                also active: apparmor
+                                  -> shirudo's docs: run no other LSM whose policy root can change at runtime; the lsm= order decides which LSM sees and logs a refusal
+
+Verdict: not ready: 7 of 11 target checks fail.

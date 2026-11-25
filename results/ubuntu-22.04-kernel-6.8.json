@@ -1,0 +1,165 @@
+{
+  "tool": "shirudo-ready",
+  "version": "1.0.0",
+  "shirudo_commit": "8a3b249b4be8",
+  "kernel_release": "6.8.0-149-generic",
+  "ready": false,
+  "failed": 7,
+  "total": 11,
+  "target": [
+    {
+      "name": "kernel_btf",
+      "status": "ok",
+      "detail": "140583 types"
+    },
+    {
+      "name": "signed_loader_kernel_abi",
+      "status": "fail",
+      "detail": "struct bpf_map.sha is missing; boot a shirudo-patched kernel"
+    },
+    {
+      "name": "kernel_lsm_hooks",
+      "status": "fail",
+      "detail": "kernel has no LSM hooks bdev_free_security, bdev_setintegrity, bpf_prog_load, inode_file_setattr, inode_post_removexattr, mm_read_access, tpm_command (7 of 49); boot a shirudo-patched kernel",
+      "hint": "mm_read_access, tpm_command come only from patches shirudo carries; no stock kernel has them"
+    },
+    {
+      "name": "module_signatures",
+      "status": "ok",
+      "detail": "modules are signature-checked (CONFIG_MODULE_SIG)"
+    },
+    {
+      "name": "bpf_lsm_active",
+      "status": "fail",
+      "detail": "active LSMs: lockdown,capability,landlock,yama,apparmor (no bpf)",
+      "hint": "needs CONFIG_BPF_LSM=y and bpf in CONFIG_LSM, or lsm=lockdown,capability,landlock,yama,apparmor,bpf on the kernel command line"
+    },
+    {
+      "name": "bpffs_supported",
+      "status": "ok",
+      "detail": "/proc/filesystems lists bpf"
+    },
+    {
+      "name": "kernel_config",
+      "status": "fail",
+      "detail": "1 required option(s) missing; CONFIG_LSM=\"landlock,lockdown,yama,integrity,apparmor\", so bpf must be added with lsm= (/boot/config-6.8.0-149-generic)",
+      "items": [
+        "CONFIG_CRYPTO_MLDSA (ML-DSA-87, the only signature shirudo makes)"
+      ]
+    },
+    {
+      "name": "tpm2_device",
+      "status": "ok",
+      "detail": "/dev/tpmrm0 present, TPM 2.0, SHA-256 PCR bank",
+      "hint": "shirudo opens it as root; this check only sees that it exists"
+    },
+    {
+      "name": "systemd_version",
+      "status": "fail",
+      "detail": "systemd 249",
+      "hint": "needs systemd 256 or newer (shirudo-initrd.service orders after tpm2.target)"
+    },
+    {
+      "name": "uki_boot",
+      "status": "fail",
+      "detail": "UEFI boot, but no systemd-stub variables (not a unified kernel image)",
+      "hint": "a target boots a signed UKI through systemd-stub, which measures the initrd into PCR 11"
+    },
+    {
+      "name": "dracut_initrd",
+      "status": "fail",
+      "detail": "dracut is not installed",
+      "hint": "a target boots a systemd initrd built by dracut with shirudo's 90shirudo module"
+    },
+    {
+      "name": "keyring_cmdline",
+      "status": "info",
+      "detail": "not set: bpf.keyring_unsealed=1, dm_verity.keyring_unsealed=1",
+      "hint": "a target boots with both, from its signed UKI, so that init can enroll and seal the keyrings"
+    }
+  ],
+  "conflicts": [
+    {
+      "name": "systemd_bpf_settings",
+      "status": "warn",
+      "detail": "28 unit(s) use settings that systemd enforces with BPF; on an enforcing target they start without them, with no error",
+      "hint": "use nftables or a signed cgroup_skb/netfilter upatch for address rules",
+      "items": [
+        "accounts-daemon.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "fwupd.service: DeviceAllow=block-sd rw char-aux rw char-cpu/* rw char-drm rw char-gpiochip rw char-hidraw rw char-mei rw char-mtd rw char-tpm rw char-usb rw char-usb_device rw char-mem rw char-nvme rw block-blkext rw",
+        "logrotate.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)",
+        "man-db.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)",
+        "nm-priv-helper.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)",
+        "openvpn-client@.service: DeviceAllow=/dev/null rw /dev/net/tun rw",
+        "openvpn-server@.service: DeviceAllow=/dev/null rw /dev/net/tun rw",
+        "openvpn@.service: DeviceAllow=/dev/null rw /dev/net/tun rw",
+        "php8.2-fpm.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "php8.3-fpm.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "plocate-updatedb.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "redis-server.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "redis-server@.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "rsync.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "systemd-hostnamed.service: DevicePolicy=closed (from PrivateDevices=yes), IPAddressDeny=any",
+        "systemd-journald.service: DeviceAllow=char-* rw, IPAddressDeny=any",
+        "systemd-journald@.service: DevicePolicy=closed, IPAddressDeny=any",
+        "systemd-localed.service: DevicePolicy=closed (from PrivateDevices=yes), IPAddressDeny=any",
+        "systemd-logind.service: DeviceAllow=block-* r char-/dev/console rw char-drm rw char-input rw char-tty rw char-vcs rw, IPAddressDeny=any",
+        "systemd-networkd.service: DeviceAllow=char-* rw",
+        "systemd-oomd.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes), IPAddressDeny=any",
+        "systemd-resolved.service: DeviceAllow=char-rtc r (from ProtectClock=yes), DevicePolicy=closed (from PrivateDevices=yes)",
+        "systemd-timedated.service: DeviceAllow=char-rtc r, IPAddressDeny=any",
+        "systemd-timesyncd.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "systemd-udevd.service: DeviceAllow=block-* rwm char-* rwm, IPAddressDeny=any",
+        "ubuntu-advantage-desktop-daemon.service: DevicePolicy=closed (from PrivateDevices=yes)",
+        "upower.service: IPAddressDeny=any",
+        "uuidd.service: DevicePolicy=closed (from PrivateDevices=yes)"
+      ]
+    },
+    {
+      "name": "bpf_programs_running",
+      "status": "ok",
+      "detail": "no known BPF agent is running"
+    },
+    {
+      "name": "bpf_tools_installed",
+      "status": "info",
+      "detail": "installed BPF tools stop at their first map or program load (bpftool's prog show keeps working)",
+      "hint": "run one-off investigations on a host that does not enforce",
+      "items": [
+        "/usr/sbin/bpftool"
+      ]
+    },
+    {
+      "name": "container_runtimes",
+      "status": "warn",
+      "detail": "on cgroup v2, container device rules are BPF programs, and their loads are refused",
+      "hint": "shirudo's docs: test your runtime on an enforcing target",
+      "items": [
+        "/usr/bin/dockerd",
+        "/usr/bin/containerd",
+        "/usr/bin/runc"
+      ]
+    },
+    {
+      "name": "kdump_kexec",
+      "status": "ok",
+      "detail": "no crash kernel configured"
+    },
+    {
+      "name": "hibernation",
+      "status": "ok",
+      "detail": "hibernation not offered (freeze mem)"
+    },
+    {
+      "name": "systemd_keyring_setup",
+      "status": "ok",
+      "detail": "systemd-keyring-setup not installed"
+    },
+    {
+      "name": "other_lsms",
+      "status": "info",
+      "detail": "also active: apparmor",
+      "hint": "shirudo's docs: run no other LSM whose policy root can change at runtime; the lsm= order decides which LSM sees and logs a refusal"
+    }
+  ]
+}
